@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Inversiones</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Video de fondo */
+        #background-video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1; /* Asegura que el video quede detrás del contenido */
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: white;
+            background: linear-gradient(45deg, #2c3e50, #34495e, #7f8c8d, #bdc3c7);
+            background-size: 400% 400%;
+            animation: gradientAnimation 2.5s ease infinite; /* Duplicada la velocidad */
+        }
+
+        @keyframes gradientAnimation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards; /* Duplicada la velocidad */
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        h1, h2 {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-family: 'Roboto', sans-serif;
+            animation: slideFromTop 0.5s ease-out forwards; /* Duplicada la velocidad */
+        }
+
+        @keyframes slideFromTop {
+            0% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 8px;
+            font-size: 1.2rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #ecf0f1;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: #ecf0f1;
+            outline: none;
+            transition: all 0.3s ease;
+            animation: inputAnimation 0.5s ease-out forwards; /* Duplicada la velocidad */
+        }
+
+        @keyframes inputAnimation {
+            0% {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #f39c12;
+            box-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+        }
+
+        .note {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .result, .monthly-gains {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeInResults 0.5s ease-in-out forwards; /* Duplicada la velocidad */
+        }
+
+        @keyframes fadeInResults {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .monthly-gains ul {
+            line-height: 1.8;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #34495e;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            color: #fff;
+            opacity: 0;
+            animation: buttonAnimation 0.5s ease-out forwards; /* Duplicada la velocidad */
+        }
+
+        @keyframes buttonAnimation {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        button:hover {
+            background: #f39c12;
+        }
+
+        /* Responsiveness */
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1, h2 {
+                font-size: 2rem;
+            }
+
+            input {
+                font-size: 1rem;
+                padding: 12px;
+            }
+
+            button {
+                font-size: 1rem;
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Video de fondo -->
+    <video id="background-video" autoplay muted loop>
+        <source src="https://videos.pexels.com/video-files/1851190/1851190-uhd_2560_1440_25fps.mp4" type="video/mp4">
+        Tu navegador no soporta videos HTML5.
+    </video>
+
+    <div class="container">
+        <h1>Calculadora de Inversiones</h1>
+        <h2>Plazo Fijo Anual</h2>
+        <div class="note">
+            <p>Entrada mínima: 5000 € (Interés del 5% mensual para cantidades inferiores a 7000 €)</p>
+            <p>⚠️ A partir de 7000 €, el efecto de bola de nieve es del 3%.</p>
+            <p>⚠️ A partir de 10000 €, el efecto de bola de nieve es del 5%.</p>
+            <p>⚠️ A partir de 25000 €, el efecto de bola de nieve es del 7%.</p>
+        </div>
+        <form id="investmentForm">
+            <label for="investmentAmount">Monto de la inversión (€):</label>
+            <input type="number" id="investmentAmount" min="5000" placeholder="Introduce el monto (mínimo 5000)" required>
+            
+            <label for="investmentDate">Fecha de inicio:</label>
+            <input type="date" id="investmentDate" required>
+            
+            <button type="submit">Calcular</button>
+        </form>
+
+        <!-- Aquí va la gráfica -->
+        <div>
+            <canvas id="investmentChart" width="400" height="200"></canvas>
+        </div>
+
+        <div id="result" class="result" style="display: none;"></div>
+        <div id="monthlyGains" class="monthly-gains" style="display: none;"></div>
+    </div>
+
+    <script>
+        let chartInstance = null; // Variable para guardar la instancia de la gráfica
+
+        document.getElementById('investmentForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const investmentAmount = parseFloat(document.getElementById('investmentAmount').value);
+            const investmentDate = new Date(document.getElementById('investmentDate').value);
+            
+            // Asegurarse de que la fecha no sea anterior a hoy
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Establece la hora a medianoche
+
+            if (investmentDate < today) {
+                alert('La fecha de inicio debe ser a partir de hoy.');
+                return;
+            }
+
+            // Validaciones
+            if (isNaN(investmentAmount) || investmentAmount < 5000) {
+                alert('La inversión mínima es de 5000 €.');
+                return;
+            }
+
+            // Inicializamos variables
+            let totalGain = 0;
+            let currentAmount = investmentAmount;
+            let monthlyRate = 0.05; // 5% mensual fijo para menos de 7000 €
+            let snowballEffect = 0; // Efecto bola de nieve comenzará en 0%
+
+            let monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            let startMonth = investmentDate.getMonth();
+            let startYear = investmentDate.getFullYear();
+
+            // Ajuste de bola de nieve según el monto
+            if (investmentAmount >= 25000) {
+                snowballEffect = 0.07; // 7% cuando el monto es mayor o igual a 25,000 €
+            } else if (investmentAmount >= 10000) {
+                snowballEffect = 0.05; // 5% cuando el monto es mayor o igual a 10,000 €
+            } else if (investmentAmount >= 7000) {
+                snowballEffect = 0.03; // 3% cuando el monto es mayor o igual a 7,000 €
+            }
+
+            // Limpiar la gráfica anterior si existe
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Datos para la gráfica y resultados mensuales
+            let monthlyResults = [];
+            let labels = [];
+            let monthlyDetails = "<h3>Resultados mensuales:</h3><ul>";
+            
+            // Mostrar mes a mes, comenzando desde el mes siguiente
+            for (let i = 1; i <= 12; i++) {
+                const currentMonthName = monthNames[(startMonth + i) % 12];
+                const currentYear = (startMonth + i) > 11 ? startYear + 1 : startYear;
+                currentAmount += currentAmount * monthlyRate;  // Interés mensual fijo del 5%
+                
+                // Aplicamos el efecto bola de nieve si la inversión es mayor a 7000 €
+                if (currentAmount >= 7000) {
+                    currentAmount += currentAmount * snowballEffect;
+                }
+                
+                labels.push(currentMonthName + ' ' + currentYear);
+                monthlyResults.push(currentAmount.toFixed(2));
+
+                monthlyDetails += `<li>${currentMonthName} ${currentYear}: <strong>${currentAmount.toFixed(2)} €</strong> (Ganancia acumulada: ${(currentAmount - investmentAmount).toFixed(2)} €)</li>`;
+            }
+            monthlyDetails += "</ul>";
+
+            // Mostrar la gráfica con los datos obtenidos
+            const ctx = document.getElementById('investmentChart').getContext('2d');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Valor de la inversión (€)',
+                        data: monthlyResults,
+                        borderColor: '#f39c12', /* Color dorado */
+                        backgroundColor: 'rgba(243, 156, 18, 0.2)', /* Color dorado translúcido */
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+
+            // Mostrar resultados numéricos
+            totalGain = currentAmount - investmentAmount;
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <p><strong>Total invertido:</strong> ${investmentAmount.toFixed(2)} €</p>
+                <p><strong>Ganancia total (incluyendo intereses):</strong> ${(totalGain + investmentAmount).toFixed(2)} €</p>
+                <p><strong>Ganancias anuales:</strong> ${totalGain.toFixed(2)} €</p>
+            `;
+            resultDiv.style.display = 'block';
+
+            const monthlyGainsDiv = document.getElementById('monthlyGains');
+            monthlyGainsDiv.innerHTML = monthlyDetails;
+            monthlyGainsDiv.style.display = 'block';
+        });
+    </script>
+</body>
+</html>
